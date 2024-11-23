@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz Master</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Smooth transitions */
+    #modal {
+      transition: opacity 0.5s ease-in-out, transform 0.3s ease;
+    }
+
+    #modal.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.95);
+    }
+
+    #modal.show {
+      opacity: 1;
+      pointer-events: auto;
+      transform: scale(1);
+    }
+
+    .question-card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .question-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .question-card .delete-btn {
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .question-card:hover .delete-btn {
+      opacity: 1;
+    }
+
+    .floating-btn {
+      position: fixed;
+      bottom: 32px;
+      right: 32px;
+      background-color: #6366F1;
+      padding: 16px;
+      border-radius: 50%;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+
+    .floating-btn:hover {
+      transform: translateY(-5px);
+    }
+  </style>
+</head>
+<body class="bg-gray-900 font-sans text-gray-100">
+
+  <div class="container mx-auto px-6 py-8">
+    <!-- Header -->
+    <header class="text-center mb-8">
+      <h1 class="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500">Quiz Master</h1>
+      <p class="text-gray-400 text-lg mt-2">Manage your quiz questions in style.</p>
+    </header>
+
+    <!-- Difficulty Buttons -->
+    <div class="flex justify-center space-x-4 mb-6">
+      <button class="bg-green-600 text-white py-2 px-6 rounded-lg hover:bg-green-700 focus:outline-none" onclick="filterByDifficulty('easy')">Easy</button>
+      <button class="bg-yellow-600 text-white py-2 px-6 rounded-lg hover:bg-yellow-700 focus:outline-none" onclick="filterByDifficulty('medium')">Medium</button>
+      <button class="bg-red-600 text-white py-2 px-6 rounded-lg hover:bg-red-700 focus:outline-none" onclick="filterByDifficulty('hard')">Hard</button>
+    </div>
+
+    <!-- Search Bar & Toggle Show Deleted -->
+    <div class="flex justify-between mb-6">
+      <div class="relative flex-1">
+        <input type="text" id="search-bar" placeholder="Search by text or question number..." class="w-full py-2 px-4 bg-gray-800 text-white rounded-xl border border-gray-700 focus:ring-2 focus:ring-indigo-500 transition-all focus:outline-none">
+      </div>
+      <div class="flex items-center space-x-4">
+        <label for="show-deleted-toggle" class="text-gray-400">Show Deleted:</label>
+        <input type="checkbox" id="show-deleted-toggle" class="form-checkbox h-5 w-5 text-indigo-500 focus:ring-indigo-500">
+      </div>
+    </div>
+
+    <!-- Questions List -->
+    <div id="questions-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+
+    <!-- Floating Add Button -->
+    <button id="add-question-btn" class="floating-btn text-white focus:outline-none">
+      +
+    </button>
+  </div>
+
+  <!-- Modal to Add New Question -->
+  <div id="modal" class="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 hidden">
+    <div class="bg-white rounded-xl p-6 w-full max-w-lg shadow-xl transform transition-all">
+      <h2 class="text-2xl font-semibold text-gray-800">Add New Question</h2>
+      <div class="my-4">
+        <label class="block text-gray-700">Question Difficulty</label>
+        <select id="question-difficulty" class="w-full p-2 mt-2 bg-gray-100 text-gray-900 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500">
+          <option value="easy">Easy</option>
+          <option value="medium">Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+      </div>
+      <div class="my-4">
+        <label class="block text-gray-700">Question Text</label>
+        <textarea id="question-text" class="w-full p-2 mt-2 bg-gray-100 text-gray-900 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="Enter question here" rows="4"></textarea>
+      </div>
+      <div class="my-4">
+        <label class="block text-gray-700">Correct Answer</label>
+        <input type="text" id="correct-answer" class="w-full p-2 mt-2 bg-gray-100 text-gray-900 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="Enter correct answer">
+      </div>
+      <div class="flex justify-end mt-6">
+        <button id="save-question-btn" class="bg-indigo-600 text-white py-2 px-6 rounded-lg hover:bg-indigo-700 focus:outline-none">Save Question</button>
+      </div>
+      <button id="close-modal-btn" class="absolute top-4 right-4 text-gray-600 hover:text-gray-800 text-2xl">&times;</button>
+    </div>
+  </div>
+
+  <script>
+    const addButton = document.getElementById('add-question-btn');
+    const searchInput = document.getElementById('search-bar');
+    const questionsList = document.getElementById('questions-list');
+    const showDeletedToggle = document.getElementById('show-deleted-toggle');
+    const modal = document.getElementById('modal');
+    const closeModalBtn = document.getElementById('close-modal-btn');
+    const saveQuestionBtn = document.getElementById('save-question-btn');
+    const questionTextInput = document.getElementById('question-text');
+    const correctAnswerInput = document.getElementById('correct-answer');
+    const questionDifficultySelect = document.getElementById('question-difficulty');
+
+    // Functions
+    const fetchQuestions = () => JSON.parse(localStorage.getItem('questions')) || [];
+    const saveQuestions = (questions) => localStorage.setItem('questions', JSON.stringify(questions));
+
+    let questionCounter = fetchQuestions().length + 1;
+
+    const updateQuestions = (filter = null) => {
+      const allQuestions = fetchQuestions();
+      const searchTerm = searchInput.value.toLowerCase();
+      const filteredQuestions = allQuestions.filter(q => 
+        (!filter || q.difficulty === filter) &&
+        (!q.deleted || showDeletedToggle.checked) &&
+        (q.text.toLowerCase().includes(searchTerm) || q.number.toString().includes(searchTerm))
+      );
+      questionsList.innerHTML = '';
+      filteredQuestions.forEach((q, index) => {
+        questionsList.innerHTML += `
+          <div class="question-card bg-gray-800 rounded-xl p-6 shadow-lg">
+            <h3 class="text-xl font-semibold text-white">#${q.number}: ${q.text}</h3>
+            <p class="text-gray-400 mt-2">Correct Answer: ${q.correctAnswer}</p>
+          </div>
+        `;
+      });
+    };
+
+    saveQuestionBtn.addEventListener('click', () => {
+      const questions = fetchQuestions();
+      const newQuestion = {
+        number: questionCounter++,
+        text: questionTextInput.value.trim(),
+        correctAnswer: correctAnswerInput.value.trim(),
+        difficulty: questionDifficultySelect.value,
+        deleted: false
+      };
+      questions.push(newQuestion);
+      saveQuestions(questions);
+      updateQuestions();
+      modal.classList.add('hidden');
+    });
+
+    const filterByDifficulty = (difficulty) => updateQuestions(difficulty);
+
+    addButton.addEventListener('click', () => modal.classList.remove('hidden'));
+    closeModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
+    searchInput.addEventListener('input', updateQuestions);
+    showDeletedToggle.addEventListener('change', updateQuestions);
+
+    updateQuestions();
+  </script>
+</body>
+</html>
+``
