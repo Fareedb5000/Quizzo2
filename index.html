@@ -109,6 +109,15 @@
         </select>
       </div>
       <div class="my-4">
+        <label class="block text-gray-700">Question Category</label>
+        <select id="question-category" class="w-full p-2 mt-2 bg-gray-100 text-gray-900 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500">
+          <option value="Ibadah">Ibadah</option>
+          <option value="Fiqh">Fiqh</option>
+          <option value="Kalam">Kalam</option>
+          <option value="Political Islam">Political Islam</option>
+        </select>
+      </div>
+      <div class="my-4">
         <label class="block text-gray-700">Question Text</label>
         <textarea id="question-text" class="w-full p-2 mt-2 bg-gray-100 text-gray-900 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="Enter question here" rows="4"></textarea>
       </div>
@@ -134,6 +143,7 @@
     const questionTextInput = document.getElementById('question-text');
     const correctAnswerInput = document.getElementById('correct-answer');
     const questionDifficultySelect = document.getElementById('question-difficulty');
+    const questionCategorySelect = document.getElementById('question-category');
 
     // Functions
     const fetchQuestions = () => JSON.parse(localStorage.getItem('questions')) || [];
@@ -151,13 +161,13 @@
       );
       questionsList.innerHTML = '';
       filteredQuestions.forEach((q, index) => {
-        questionsList.innerHTML += `
-          <div class="question-card bg-gray-800 rounded-xl p-6 shadow-lg">
+        questionsList.innerHTML += 
+          `<div class="question-card bg-gray-800 rounded-xl p-6 shadow-lg">
             <h3 class="text-xl font-semibold text-white">#${q.number}: ${q.text}</h3>
             <p class="text-gray-400 mt-2">Correct Answer: ${q.correctAnswer}</p>
+            <p class="text-gray-400 mt-2">Category: ${q.category}</p>
             <button class="delete-btn text-red-600 hover:text-red-800 mt-4 focus:outline-none" onclick="deleteQuestion(${q.number})">Delete</button>
-          </div>
-        `;
+          </div>`;
       });
     };
 
@@ -178,6 +188,7 @@
         text: questionTextInput.value.trim(),
         correctAnswer: correctAnswerInput.value.trim(),
         difficulty: questionDifficultySelect.value,
+        category: questionCategorySelect.value,
         deleted: false
       };
       questions.push(newQuestion);
@@ -186,13 +197,23 @@
       modal.classList.add('hidden');
     });
 
-    const filterByDifficulty = (difficulty) => updateQuestions(difficulty);
+    addButton.addEventListener('click', () => {
+      modal.classList.remove('hidden');
+    });
 
-    addButton.addEventListener('click', () => modal.classList.remove('hidden'));
-    closeModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
-    searchInput.addEventListener('input', updateQuestions);
-    showDeletedToggle.addEventListener('change', updateQuestions);
+    closeModalBtn.addEventListener('click', () => {
+      modal.classList.add('hidden');
+    });
 
+    searchInput.addEventListener('input', () => {
+      updateQuestions();
+    });
+
+    showDeletedToggle.addEventListener('change', () => {
+      updateQuestions();
+    });
+
+    // Initial Update
     updateQuestions();
   </script>
 </body>
