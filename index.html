@@ -94,6 +94,11 @@
     <button id="add-question-btn" class="floating-btn text-white focus:outline-none">
       +
     </button>
+
+    <!-- Start Quiz Button -->
+    <button id="start-quiz-btn" class="floating-btn text-white focus:outline-none bottom-16 bg-green-600 hover:bg-green-700">
+      Start Quiz
+    </button>
   </div>
 
   <!-- Modal to Add New Question -->
@@ -144,23 +149,27 @@
     const correctAnswerInput = document.getElementById('correct-answer');
     const questionDifficultySelect = document.getElementById('question-difficulty');
     const questionCategorySelect = document.getElementById('question-category');
+    const startQuizBtn = document.getElementById('start-quiz-btn');
 
     // Functions
     const fetchQuestions = () => JSON.parse(localStorage.getItem('questions')) || [];
     const saveQuestions = (questions) => localStorage.setItem('questions', JSON.stringify(questions));
 
-    let questionCounter = fetchQuestions().length + 1;
+    const getNextQuestionNumber = () => {
+      const allQuestions = fetchQuestions();
+      const activeQuestions = allQuestions.filter(q => !q.deleted);
+      return activeQuestions.length + 1;
+    };
 
     const updateQuestions = (filter = null) => {
       const allQuestions = fetchQuestions();
       const searchTerm = searchInput.value.toLowerCase();
       const filteredQuestions = allQuestions.filter(q => 
-        (!filter || q.difficulty === filter) &&  // Apply the difficulty filter
-        (!q.deleted || showDeletedToggle.checked) && // Show deleted if toggle is checked
-        (q.text.toLowerCase().includes(searchTerm) || q.number.toString().includes(searchTerm)) // Apply the search term filter
+        (!filter || q.difficulty === filter) && 
+        (!q.deleted || showDeletedToggle.checked) && 
+        (q.text.toLowerCase().includes(searchTerm) || q.number.toString().includes(searchTerm))
       );
 
-      // Update the question list in the UI
       questionsList.innerHTML = '';
       filteredQuestions.forEach((q, index) => {
         questionsList.innerHTML += 
@@ -183,8 +192,23 @@
       }
     };
 
+    const reassignQuestionNumbers = () => {
+      const questions = fetchQuestions();
+      const activeQuestions = questions.filter(q => !q.deleted);
+      activeQuestions.forEach((q, index) => {
+        q.number = index + 1; // Reassign sequential number starting from 1
+      });
+      saveQuestions(questions);
+    };
+
     const filterByDifficulty = (difficulty) => {
-      updateQuestions(difficulty); // Update the questions based on selected difficulty
+      updateQuestions(difficulty);
+    };
+
+    const startQuiz = () => {
+      reassignQuestionNumbers(); // Reassign numbers when quiz starts
+      updateQuestions(); // Load questions with updated numbering
+      alert('Quiz Started!');
     };
 
     // Event Listeners
@@ -200,7 +224,7 @@
 
     saveQuestionBtn.addEventListener('click', () => {
       const newQuestion = {
-        number: questionCounter++,
+        number: getNextQuestionNumber(),
         text: questionTextInput.value,
         correctAnswer: correctAnswerInput.value,
         category: questionCategorySelect.value,
@@ -214,6 +238,22 @@
       modal.classList.add('hidden');
       updateQuestions();
     });
+    const reassignSavedQuestionNumbers = () => {
+  const questions = fetchQuestions();
+  const activeQuestions = questions.filter(q => !q.deleted); // Filter out deleted questions
+  activeQuestions.forEach((q, index) => {
+    q.number = index + 1; // Reassign sequential number starting from 1
+  });
+  saveQuestions(questions);
+  alert('Saved question numbers have been updated!');
+};
+window.onload = () => {
+  reassignSavedQuestionNumbers();
+  updateQuestions(); // Load the questions with the updated numbering
+};
+
+
+    startQuizBtn.addEventListener('click', startQuiz);
 
     // Initialize
     updateQuestions(); // Load all questions on page load
