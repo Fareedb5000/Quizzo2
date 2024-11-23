@@ -155,10 +155,12 @@
       const allQuestions = fetchQuestions();
       const searchTerm = searchInput.value.toLowerCase();
       const filteredQuestions = allQuestions.filter(q => 
-        (!filter || q.difficulty === filter) &&
-        (!q.deleted || showDeletedToggle.checked) &&
-        (q.text.toLowerCase().includes(searchTerm) || q.number.toString().includes(searchTerm))
+        (!filter || q.difficulty === filter) &&  // Apply the difficulty filter
+        (!q.deleted || showDeletedToggle.checked) && // Show deleted if toggle is checked
+        (q.text.toLowerCase().includes(searchTerm) || q.number.toString().includes(searchTerm)) // Apply the search term filter
       );
+
+      // Update the question list in the UI
       questionsList.innerHTML = '';
       filteredQuestions.forEach((q, index) => {
         questionsList.innerHTML += 
@@ -175,46 +177,46 @@
       const questions = fetchQuestions();
       const question = questions.find(q => q.number === number);
       if (question) {
-        question.deleted = true;  // Mark as deleted
+        question.deleted = !question.deleted;
         saveQuestions(questions);
         updateQuestions();
       }
     };
 
-    saveQuestionBtn.addEventListener('click', () => {
-      const questions = fetchQuestions();
-      const newQuestion = {
-        number: questionCounter++,
-        text: questionTextInput.value.trim(),
-        correctAnswer: correctAnswerInput.value.trim(),
-        difficulty: questionDifficultySelect.value,
-        category: questionCategorySelect.value,
-        deleted: false
-      };
-      questions.push(newQuestion);
-      saveQuestions(questions);
-      updateQuestions();
-      modal.classList.add('hidden');
-    });
+    const filterByDifficulty = (difficulty) => {
+      updateQuestions(difficulty); // Update the questions based on selected difficulty
+    };
 
+    // Event Listeners
     addButton.addEventListener('click', () => {
       modal.classList.remove('hidden');
+      modal.classList.add('show');
     });
 
     closeModalBtn.addEventListener('click', () => {
+      modal.classList.remove('show');
       modal.classList.add('hidden');
     });
 
-    searchInput.addEventListener('input', () => {
+    saveQuestionBtn.addEventListener('click', () => {
+      const newQuestion = {
+        number: questionCounter++,
+        text: questionTextInput.value,
+        correctAnswer: correctAnswerInput.value,
+        category: questionCategorySelect.value,
+        difficulty: questionDifficultySelect.value,
+        deleted: false
+      };
+      const questions = fetchQuestions();
+      questions.push(newQuestion);
+      saveQuestions(questions);
+      modal.classList.remove('show');
+      modal.classList.add('hidden');
       updateQuestions();
     });
 
-    showDeletedToggle.addEventListener('change', () => {
-      updateQuestions();
-    });
-
-    // Initial Update
-    updateQuestions();
+    // Initialize
+    updateQuestions(); // Load all questions on page load
   </script>
 </body>
 </html>
