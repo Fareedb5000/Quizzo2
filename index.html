@@ -155,9 +155,20 @@
           <div class="question-card bg-gray-800 rounded-xl p-6 shadow-lg">
             <h3 class="text-xl font-semibold text-white">#${q.number}: ${q.text}</h3>
             <p class="text-gray-400 mt-2">Correct Answer: ${q.correctAnswer}</p>
+            <button class="delete-btn text-red-600 hover:text-red-800 mt-4 focus:outline-none" onclick="deleteQuestion(${q.number})">Delete</button>
           </div>
         `;
       });
+    };
+
+    const deleteQuestion = (number) => {
+      const questions = fetchQuestions();
+      const question = questions.find(q => q.number === number);
+      if (question) {
+        question.deleted = true;  // Mark as deleted
+        saveQuestions(questions);
+        updateQuestions();
+      }
     };
 
     saveQuestionBtn.addEventListener('click', () => {
@@ -186,4 +197,3 @@
   </script>
 </body>
 </html>
-``
